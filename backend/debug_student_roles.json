@@ -1,0 +1,50 @@
+[
+  {
+    "currency": "INR",
+    "_id": "6979e60bfcab3148eb85ab77",
+    "companyId": "6979e5b3fcab3148eb85ab49",
+    "title": "ml",
+    "description": "should know python ",
+    "stipend": "3000",
+    "eligibility": "any btech student ",
+    "createdAt": "2026-01-28T10:33:47.123Z",
+    "updatedAt": "2026-01-28T10:33:47.123Z",
+    "__v": 0
+  },
+  {
+    "currency": "INR",
+    "_id": "6979e61bfcab3148eb85ab7e",
+    "companyId": "6979e5b3fcab3148eb85ab49",
+    "title": "web dev",
+    "description": "snscb",
+    "stipend": "200",
+    "eligibility": "2nd year Btech",
+    "createdAt": "2026-01-28T10:34:03.914Z",
+    "updatedAt": "2026-01-28T10:34:03.914Z",
+    "__v": 0
+  },
+  {
+    "_id": "6979f21307075c76c5190ab0",
+    "companyId": "6979e5b3fcab3148eb85ab49",
+    "title": "ve",
+    "description": "vn",
+    "stipend": "200",
+    "eligibility": "2nd year Btech",
+    "currency": "INR",
+    "createdAt": "2026-01-28T11:25:07.156Z",
+    "updatedAt": "2026-01-28T11:37:57.982Z",
+    "__v": 0
+  },
+  {
+    "_id": "697a0e0b64b67b0287b8b54b",
+    "companyId": "6979e5b3fcab3148eb85ab49",
+    "title": "asdfghjk",
+    "description": "edfghj",
+    "stipend": "578",
+    "eligibility": "2nd year Btech",
+    "currency": "INR",
+    "createdAt": "2026-01-28T13:24:27.157Z",
+    "updatedAt": "2026-01-28T13:24:27.157Z",
+    "__v": 0
+  }
+]
