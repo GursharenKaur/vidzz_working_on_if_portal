@@ -1,5 +1,4 @@
-// e:/try/components/auth/RegisterForm.tsx
-'use client';
+"use client"
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -7,8 +6,8 @@ import { useAuthStore } from '@/lib/store/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Loader2, User, Building2, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
@@ -26,11 +25,9 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     email: '',
     password: '',
     phone: '',
-    // Student specific
     rollNo: '',
     year: '',
     branch: '',
-    // Company specific
     companyName: '',
     industry: '',
     website: '',
@@ -39,13 +36,9 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // ✅ REAL REGISTER HANDLER (BACKEND CONNECTED)
   const handleRoleSelect = (selectedRole: 'student' | 'company') => {
     setRole(selectedRole);
     setStep('form');
@@ -57,10 +50,7 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     setIsLoading(true);
 
     try {
-      const formattedPhone = formData.phone.startsWith('+')
-        ? formData.phone
-        : `+91${formData.phone}`;
-
+      const formattedPhone = formData.phone.startsWith('+') ? formData.phone : `+91${formData.phone}`;
       const baseData = {
         name: role === 'company' ? formData.companyName : formData.name,
         email: formData.email,
@@ -81,250 +71,172 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
 
       const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...baseData,
-          ...roleSpecificData,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...baseData, ...roleSpecificData }),
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Registration failed');
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      useAuthStore.getState().setAuth(
-        data.token,
-        data.role,
-        data.user
-      );
-
-      // Redirect based on role
+      useAuthStore.getState().setAuth(data.token, data.role, data.user);
       router.push(`/${role}/dashboard`);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Registration failed. Please try again.'
-      );
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md space-y-8">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight">
-          {step === 'role' ? 'Create an account' : `Register as ${role}`}
-        </h2>
-        <p className="mt-2 text-sm text-gray-600">
-          {step === 'form' && (
-            <button
-              type="button"
-              onClick={() => setStep('role')}
-              className="font-medium text-primary hover:text-primary/90 mr-2"
-            >
-              ← Back
-            </button>
-          )}
-          Or{' '}
+    <div className="w-full space-y-8">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={onSwitchToLogin}
-            className="font-medium text-primary hover:text-primary/90"
+            onClick={step === 'form' ? () => setStep('role') : onSwitchToLogin}
+            className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
           >
-            sign in to your existing account
+            <ArrowLeft className="h-3 w-3 group-hover:-translate-x-1 transition-transform" />
+            {step === 'form' ? 'Role Selection' : 'Sign In'}
           </button>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+            <div className="h-1 w-1 rounded-full bg-cyan-400" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-cyan-400">Step {step === 'role' ? '01' : '02'}</span>
+          </div>
+        </div>
+        <h2 className="text-3xl font-black tracking-tighter text-foreground">
+          {step === 'role' ? 'Initialize Identity' : `Profile Configuration`}
+        </h2>
+        <p className="text-muted-foreground font-medium text-sm">
+          {step === 'role' ? 'Select your operational role within the ecosystem.' : `Establishing your credentials as a ${role}.`}
         </p>
       </div>
 
       {error && (
-        <div className="p-4 text-sm text-red-600 bg-red-50 rounded-md">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 text-xs font-bold text-rose-500 bg-rose-500/10 border border-rose-500/20 rounded-xl text-center uppercase tracking-widest">
           {error}
-        </div>
+        </motion.div>
       )}
 
-      {step === 'role' ? (
-        <div className="mt-8 space-y-6">
-          <div className="space-y-4">
-            <Button
-              type="button"
+      <AnimatePresence mode="wait">
+        {step === 'role' ? (
+          <motion.div
+            key="role-selection"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="grid gap-4"
+          >
+            <button
               onClick={() => handleRoleSelect('student')}
-              className="w-full justify-start px-6 py-8 text-lg"
-              variant="outline"
+              className="group relative flex items-center gap-6 p-6 rounded-2xl bg-white/[0.03] border border-white/10 text-left hover:bg-white/[0.08] hover:border-cyan-500/30 transition-all font-sans"
             >
-              <div className="text-left">
-                <h3 className="font-bold">I'm a Student</h3>
-                <p className="text-sm font-normal text-gray-500 mt-1">
-                  Looking for internships and job opportunities
-                </p>
+              <div className="h-14 w-14 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                <User className="h-7 w-7" />
               </div>
-            </Button>
+              <div className="flex-1">
+                <h3 className="font-black text-foreground uppercase tracking-wider">Candidate Alpha</h3>
+                <p className="text-xs text-muted-foreground font-medium mt-1">Looking for professional placements and skill validation.</p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-zinc-700 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+            </button>
 
-            <Button
-              type="button"
+            <button
               onClick={() => handleRoleSelect('company')}
-              className="w-full justify-start px-6 py-8 text-lg"
-              variant="outline"
+              className="group relative flex items-center gap-6 p-6 rounded-2xl bg-white/[0.03] border border-white/10 text-left hover:bg-white/[0.08] hover:border-purple-500/30 transition-all font-sans"
             >
-              <div className="text-left">
-                <h3 className="font-bold">I'm a Company</h3>
-                <p className="text-sm font-normal text-gray-500 mt-1">
-                  Looking to hire talented students
-                </p>
+              <div className="h-14 w-14 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                <Building2 className="h-7 w-7" />
               </div>
+              <div className="flex-1">
+                <h3 className="font-black text-foreground uppercase tracking-wider">Enterprise Entity</h3>
+                <p className="text-xs text-muted-foreground font-medium mt-1">Seeking high-performance talent and strategic growth.</p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-zinc-700 group-hover:text-purple-400 group-hover:translate-x-1 transition-all" />
+            </button>
+          </motion.div>
+        ) : (
+          <motion.form
+            key="registration-form"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            onSubmit={handleRegister}
+            className="space-y-6"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {role === 'student' ? (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
+                    <Input name="name" required value={formData.name} onChange={handleInputChange} className="h-11 bg-white/5 border-white/10 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Roll Number</Label>
+                    <Input name="rollNo" required value={formData.rollNo} onChange={handleInputChange} className="h-11 bg-white/5 border-white/10 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Academics (Year)</Label>
+                    <Input name="year" required value={formData.year} onChange={handleInputChange} placeholder="e.g., 3rd" className="h-11 bg-white/5 border-white/10 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Discipline (Branch)</Label>
+                    <Input name="branch" required value={formData.branch} onChange={handleInputChange} placeholder="e.g., CSE" className="h-11 bg-white/5 border-white/10 rounded-xl" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Entity Name</Label>
+                    <Input name="companyName" required value={formData.companyName} onChange={handleInputChange} className="h-11 bg-white/5 border-white/10 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Industry Sector</Label>
+                    <Input name="industry" required value={formData.industry} onChange={handleInputChange} className="h-11 bg-white/5 border-white/10 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Web Presence</Label>
+                    <Input name="website" type="url" value={formData.website} onChange={handleInputChange} placeholder="https://..." className="h-11 bg-white/5 border-white/10 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">HQ Address</Label>
+                    <Input name="address" value={formData.address} onChange={handleInputChange} className="h-11 bg-white/5 border-white/10 rounded-xl" />
+                  </div>
+                </>
+              )}
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Communications (Email)</Label>
+                <Input name="email" type="email" required value={formData.email} onChange={handleInputChange} className="h-11 bg-white/5 border-white/10 rounded-xl" />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Mobile Protocol</Label>
+                <Input name="phone" type="tel" required value={formData.phone} onChange={handleInputChange} placeholder="+91..." className="h-11 bg-white/5 border-white/10 rounded-xl" />
+              </div>
+
+              <div className="col-span-1 md:col-span-2 space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Security Key (Password)</Label>
+                <Input name="password" type="password" required value={formData.password} onChange={handleInputChange} className="h-11 bg-white/5 border-white/10 rounded-xl" />
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-black uppercase tracking-widest transition-all shadow-xl shadow-foreground/10 group font-sans" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  Provisioning Account...
+                </>
+              ) : (
+                <>
+                  Establish Credentials
+                  <CheckCircle2 className="ml-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                </>
+              )}
             </Button>
-          </div>
-        </div>
-      ) : (
-        <form className="mt-8 space-y-6" onSubmit={handleRegister}>
-          <div className="space-y-4">
-            {role === 'student' ? (
-              <>
-                <div>
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    required
-                    value={formData.name}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="rollNo">Roll Number</Label>
-                  <Input
-                    id="rollNo"
-                    name="rollNo"
-                    required
-                    value={formData.rollNo}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="year">Year</Label>
-                  <Input
-                    id="year"
-                    name="year"
-                    required
-                    value={formData.year}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 3rd"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="branch">Branch</Label>
-                  <Input
-                    id="branch"
-                    name="branch"
-                    required
-                    value={formData.branch}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Computer Science"
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <Label htmlFor="companyName">Company Name</Label>
-                  <Input
-                    id="companyName"
-                    name="companyName"
-                    required
-                    value={formData.companyName}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="industry">Industry</Label>
-                  <Input
-                    id="industry"
-                    name="industry"
-                    required
-                    value={formData.industry}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Technology, Finance, etc."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    name="website"
-                    type="url"
-                    value={formData.website}
-                    onChange={handleInputChange}
-                    placeholder="https://example.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="Company's physical address"
-                  />
-                </div>
-              </>
-            )}
-
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={formData.password}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                required
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder="+91XXXXXXXXXX"
-              />
-            </div>
-          </div>
-
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating {role} account...
-              </>
-            ) : (
-              `Create ${role} account`
-            )}
-          </Button>
-        </form>
-      )}
+          </motion.form>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

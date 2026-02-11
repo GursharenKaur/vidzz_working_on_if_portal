@@ -4,8 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/store/auth"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
   MapPin,
@@ -19,10 +18,15 @@ import {
   CheckCircle,
   Loader2,
   ChevronRight,
-  Info
+  Info,
+  Sparkles,
+  ExternalLink
 } from "lucide-react"
 import { toast } from "sonner"
 import { studentApi } from "@/lib/api/student"
+import { GlassCard } from "@/components/shared/glass-card"
+import { motion, AnimatePresence } from "framer-motion"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function CompanyDetailsPage() {
   const params = useParams()
@@ -46,7 +50,6 @@ export default function CompanyDetailsPage() {
     const loadData = async () => {
       try {
         setLoading(true)
-        // Fetch company and roles
         const compRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/student/company/${companyId}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -61,7 +64,6 @@ export default function CompanyDetailsPage() {
           setSelectedRole(rolesData[0])
         }
 
-        // Fetch student profile for resume
         const profData = await studentApi.getProfile()
         const s = profData?.student || profData
         const r = s?.resumeUrl
@@ -72,16 +74,15 @@ export default function CompanyDetailsPage() {
           })
         }
 
-        // Fetch existing applications to check what's already applied
         const appsData = await studentApi.getApplications()
         if (appsData) {
           const ids = appsData.map((app: any) => app.roleId?._id || app.roleId)
           setAppliedRoleIds(ids)
         }
       } catch (err) {
-        toast.error("Failed to load company details")
+        toast.error("Failed to load details")
       } finally {
-        setLoading(false)
+        setTimeout(() => setLoading(false), 600)
       }
     }
 
@@ -94,7 +95,6 @@ export default function CompanyDetailsPage() {
 
     try {
       setIsSubmitting(true)
-
       const res = await studentApi.applyForRole(selectedRole._id, useExistingResume, resume || undefined)
 
       if (res.success) {
@@ -107,293 +107,320 @@ export default function CompanyDetailsPage() {
         toast.error(res.message || "Failed to submit application")
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || "An error occurred. Please try again.")
+      toast.error(err.response?.data?.message || err.message || "An error occurred.")
     } finally {
       setIsSubmitting(false)
     }
   }
 
-
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-[60vh] gap-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary/40" />
-        <p className="text-muted-foreground animate-pulse">Loading company overview...</p>
+      <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-10 min-h-screen">
+        <div className="flex flex-col md:flex-row gap-8 items-center">
+          <Skeleton className="h-32 w-32 rounded-3xl bg-white/5" />
+          <div className="space-y-4 flex-1">
+            <Skeleton className="h-10 w-1/3 bg-white/5" />
+            <Skeleton className="h-6 w-1/4 bg-white/5" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-2 space-y-10">
+            <Skeleton className="h-64 w-full bg-white/5 rounded-3xl" />
+            <Skeleton className="h-96 w-full bg-white/5 rounded-3xl" />
+          </div>
+          <Skeleton className="h-[500px] w-full bg-white/5 rounded-3xl lg:sticky lg:top-10" />
+        </div>
       </div>
     )
   }
 
   if (!company) {
     return (
-      <div className="p-8 text-center bg-muted/20 rounded-2xl border m-8">
-        <h2 className="text-2xl font-bold">Company not found</h2>
-        <Button variant="link" onClick={() => router.back()}>Go back</Button>
+      <div className="min-h-screen flex items-center justify-center p-6 text-center">
+        <GlassCard className="p-12 max-w-md">
+          <h2 className="text-3xl font-bold text-white mb-4">Discovery Failed</h2>
+          <p className="text-zinc-400 mb-8">We couldn't find the company you're looking for. It might have been unregistered or the link is expired.</p>
+          <Button onClick={() => router.back()} className="rounded-full px-8 bg-cyan-500 hover:bg-cyan-600">
+            Go Back
+          </Button>
+        </GlassCard>
       </div>
     )
   }
 
   const logoUrl = company.logo
     ? (company.logo.startsWith('http') ? company.logo : `${process.env.NEXT_PUBLIC_BACKEND_URL}${company.logo}`)
-    : "https://via.placeholder.com/150?text=Company"
+    : "/favicon.ico"
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b">
-        <div className="flex items-center gap-6">
-          <div className="h-24 w-24 rounded-2xl border shadow-sm bg-white p-3 flex items-center justify-center shrink-0">
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-10 min-h-screen">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-[32px] border border-border bg-foreground/5 p-8 lg:p-12"
+      >
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 lg:gap-12">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="h-32 w-32 lg:h-40 lg:w-40 rounded-[28px] border border-border bg-white p-6 flex items-center justify-center shrink-0 shadow-2xl"
+          >
             <img
               src={logoUrl}
               alt={company.name}
               className="max-h-full max-w-full object-contain"
-              onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/150?text=Logo")}
+              onError={(e) => (e.currentTarget.src = "/favicon.ico")}
             />
-          </div>
-          <div>
-            <h1 className="text-4xl font-extrabold tracking-tight">{company.name}</h1>
-            <div className="flex flex-wrap items-center gap-4 mt-2 text-muted-foreground">
-              <span className="flex items-center gap-1.5 bg-muted/50 px-3 py-1 rounded-full text-sm">
-                <MapPin className="h-4 w-4" />
-                {company.location || company.address?.city || "Remote"}
+          </motion.div>
+
+          <div className="text-center md:text-left space-y-4">
+            <div className="flex justify-center md:justify-start items-center gap-2 text-cyan-500">
+              <Sparkles className="h-4 w-4" />
+              <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Partner</span>
+            </div>
+            <h1 className="text-4xl lg:text-6xl font-black tracking-tighter text-foreground">
+              {company.name}
+            </h1>
+            <div className="flex flex-wrap justify-center md:justify-start items-center gap-5">
+              <span className="flex items-center gap-2 text-muted-foreground text-sm">
+                <MapPin className="h-4 w-4 text-rose-500" />
+                {company.location || company.address?.city || "Worldwide"}
               </span>
               {company.website && (
                 <a
                   href={company.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 hover:text-primary transition-colors bg-muted/50 px-3 py-1 rounded-full text-sm"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-cyan-500 text-sm transition-colors group"
                 >
-                  <Globe className="h-4 w-4" />
+                  <Globe className="h-4 w-4 text-cyan-500" />
                   {company.website.replace(/^https?:\/\//, '')}
+                  <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </a>
               )}
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left Column - Details & Roles */}
-        <div className="lg:col-span-2 space-y-8">
+        {/* Background Accents */}
+        <div className="absolute top-0 right-0 h-full w-1/3 bg-gradient-to-l from-cyan-500/5 to-transparent z-0" />
+      </motion.div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-12">
           {/* About Section */}
-          <section className="space-y-4">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Info className="h-6 w-6 text-primary" />
-              About the Company
-            </h2>
-            <Card className="border-none shadow-sm bg-muted/10">
-              <CardContent className="pt-6 text-lg leading-relaxed text-muted-foreground">
-                {company.about || company.description || "No description available for this company."}
-              </CardContent>
-            </Card>
+          <section className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-1 bg-cyan-500 rounded-full" />
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">About</h2>
+            </div>
+            <GlassCard className="p-8 border-border bg-card/50">
+              <p className="text-lg leading-relaxed text-muted-foreground font-light">
+                {company.about || company.description || "No description provided."}
+              </p>
+            </GlassCard>
           </section>
 
-          {/* Roles Section */}
-          <section className="space-y-4">
+          {/* Opportunities Section */}
+          <section className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Briefcase className="h-6 w-6 text-primary" />
-                Open Opportunities
-              </h2>
-              <Badge variant="secondary">{roles.length} Roles</Badge>
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-1 bg-cyan-500 rounded-full" />
+                <h2 className="text-2xl font-bold text-foreground tracking-tight">Jobs</h2>
+              </div>
+              <Badge className="bg-foreground/5 border-border text-muted-foreground px-4 py-1.5 rounded-full">
+                {roles.length} Openings
+              </Badge>
             </div>
 
-            <div className="grid gap-4">
-              {roles.length === 0 ? (
-                <div className="p-12 border-2 border-dashed rounded-2xl text-center">
-                  <p className="text-muted-foreground">This company hasn't posted any roles yet.</p>
-                </div>
-              ) : (
-                roles.map((role) => (
-                  <Card
-                    key={role._id}
-                    className={`group cursor-pointer transition-all border-2 ${selectedRole?._id === role._id
-                      ? 'border-primary ring-1 ring-primary/20 bg-primary/[0.02]'
-                      : 'hover:border-primary/40 hover:bg-muted/30'
-                      }`}
-                    onClick={() => setSelectedRole(role)}
+            <div className="grid gap-6">
+              <AnimatePresence mode="popLayout">
+                {roles.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="p-20 rounded-[32px] border-2 border-dashed border-border text-center bg-foreground/[0.02]"
                   >
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="space-y-3 flex-1">
-                          <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
-                            {role.title}
-                          </h3>
-                          <div className="flex flex-wrap gap-3">
-                            <Badge variant="outline" className="flex items-center gap-1.5 py-1 px-3">
-                              {role.currency === 'USD' ? <DollarSign className="h-3.5 w-3.5" /> : <IndianRupee className="h-3.5 w-3.5" />}
-                              {role.stipend}
-                            </Badge>
-                            <Badge variant="outline" className="flex items-center gap-1.5 py-1 px-3">
-                              <CheckCircle className="h-3.5 w-3.5" />
-                              {role.eligibility}
-                            </Badge>
+                    <Briefcase className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="text-muted-foreground font-medium">No roles posted at this moment.</p>
+                  </motion.div>
+                ) : (
+                  roles.map((role, idx) => (
+                    <motion.div
+                      key={role._id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      onClick={() => setSelectedRole(role)}
+                      className={`group relative cursor-pointer rounded-3xl border transition-all duration-300 p-8 ${selectedRole?._id === role._id
+                        ? 'border-cyan-500 bg-cyan-500/5'
+                        : 'border-border bg-card/50 hover:border-border hover:bg-foreground/[0.04]'
+                        }`}
+                    >
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div className="space-y-4 flex-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-2xl font-bold text-foreground group-hover:text-cyan-500 transition-colors">
+                              {role.title}
+                            </h3>
+                            {appliedRoleIds.includes(role._id) && (
+                              <Badge className="bg-emerald-500 text-white border-none">Applied</Badge>
+                            )}
                           </div>
-                          <p className="text-muted-foreground text-sm line-clamp-2">
+
+                          <div className="flex flex-wrap gap-3">
+                            <div className="flex items-center gap-2 bg-foreground/5 border border-border px-4 py-1.5 rounded-2xl text-muted-foreground text-xs font-medium">
+                              {role.currency === 'USD' ? <DollarSign className="h-3.5 w-3.5 text-emerald-500" /> : <IndianRupee className="h-3.5 w-3.5 text-emerald-500" />}
+                              {role.stipend} / month
+                            </div>
+                            <div className="flex items-center gap-2 bg-foreground/5 border border-border px-4 py-1.5 rounded-2xl text-muted-foreground text-xs font-medium">
+                              <CheckCircle className="h-3.5 w-3.5 text-cyan-500" />
+                              {role.eligibility}
+                            </div>
+                          </div>
+
+                          <p className="text-muted-foreground text-sm line-clamp-2 font-medium">
                             {role.description}
                           </p>
                         </div>
-                        <Button
-                          variant={appliedRoleIds.includes(role._id) ? "outline" : selectedRole?._id === role._id ? "default" : "outline"}
-                          className={`shrink-0 ${appliedRoleIds.includes(role._id) ? 'text-amber-600 border-amber-200 bg-amber-50/50' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSelectedRole(role)
-                            document.getElementById('application-card')?.scrollIntoView({ behavior: 'smooth' })
-                          }}
-                        >
-                          {appliedRoleIds.includes(role._id) ? "Applied" : selectedRole?._id === role._id ? "Selected" : "Select Role"}
-                          <ChevronRight className="ml-2 h-4 w-4" />
-                        </Button>
+
+                        <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-all ${selectedRole?._id === role._id ? 'bg-cyan-500' : 'bg-foreground/5 group-hover:bg-foreground/10'
+                          }`}>
+                          <ChevronRight className={`h-6 w-6 transition-transform ${selectedRole?._id === role._id ? 'text-white translate-x-0.5' : 'text-muted-foreground group-hover:text-foreground'
+                            }`} />
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
+                    </motion.div>
+                  ))
+                )}
+              </AnimatePresence>
             </div>
           </section>
         </div>
 
-        {/* Right Column - Application Form */}
-        <div className="lg:sticky lg:top-8" id="application-card">
-          <Card className="shadow-xl border-t-4 border-t-primary">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl">Apply Now</CardTitle>
-              <CardDescription>
-                Submit your application for <span className="text-foreground font-semibold">{selectedRole?.title}</span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleApply} className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex p-1 bg-muted rounded-xl gap-1">
-                    <button
-                      type="button"
-                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${useExistingResume
-                        ? 'bg-white shadow-sm text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                      onClick={() => setUseExistingResume(true)}
-                    >
-                      Existing Resume
-                    </button>
-                    <button
-                      type="button"
-                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${!useExistingResume
-                        ? 'bg-white shadow-sm text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                      onClick={() => setUseExistingResume(false)}
-                    >
-                      Upload New
-                    </button>
-                  </div>
+        {/* Sidebar Application */}
+        <div className="lg:sticky lg:top-10">
+          <GlassCard className="p-8 border-border bg-card/50 shadow-2xl">
+            <div className="space-y-2 mb-8 text-center lg:text-left">
+              <h3 className="text-2xl font-bold text-foreground">Apply</h3>
+              <p className="text-muted-foreground text-sm font-medium leading-relaxed">
+                Applying for <span className="text-cyan-500">{selectedRole?.title}</span>
+              </p>
+            </div>
 
+            <form onSubmit={handleApply} className="space-y-8">
+              <div className="space-y-6">
+                <div className="flex p-1.5 bg-foreground/5 rounded-[20px] gap-1.5 border border-border">
+                  <button
+                    type="button"
+                    className={`flex-1 py-3 px-4 rounded-[14px] text-xs font-bold tracking-widest uppercase transition-all ${useExistingResume
+                      ? 'bg-cyan-500 shadow-lg shadow-cyan-500/20 text-white'
+                      : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    onClick={() => setUseExistingResume(true)}
+                  >
+                    Saved CV
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex-1 py-3 px-4 rounded-[14px] text-xs font-bold tracking-widest uppercase transition-all ${!useExistingResume
+                      ? 'bg-cyan-500 shadow-lg shadow-cyan-500/20 text-white'
+                      : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    onClick={() => setUseExistingResume(false)}
+                  >
+                    Upload New
+                  </button>
+                </div>
+
+                <AnimatePresence mode="wait">
                   {useExistingResume ? (
-                    <div className="border rounded-xl p-4 bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <motion.div
+                      key="existing"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="rounded-2xl p-5 border border-border bg-foreground/[0.02]"
+                    >
                       {existingResume ? (
                         <div className="flex items-center gap-4">
-                          <div className="p-2 bg-primary/10 rounded-lg">
-                            <FileText className="h-6 w-6 text-primary" />
+                          <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                            <FileText className="h-5 w-5 text-cyan-500" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold truncate">{existingResume.name}</p>
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mt-0.5">
-                              Ready to submit
-                            </p>
+                            <p className="text-sm font-bold text-foreground truncate">{existingResume.name}</p>
+                            <p className="text-[10px] text-muted-foreground/50 font-bold uppercase tracking-wider">From Profile</p>
                           </div>
-                          <a
-                            href={existingResume.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-bold text-primary hover:underline hover:text-primary/80"
-                          >
-                            VIEW
-                          </a>
                         </div>
                       ) : (
-                        <div className="text-center py-4 space-y-2">
-                          <p className="text-sm text-muted-foreground">
-                            No resume found in your profile.
-                          </p>
+                        <div className="text-center py-6 space-y-4">
+                          <p className="text-xs text-muted-foreground font-medium">No resume on file</p>
                           <Button
-                            variant="secondary"
+                            variant="outline"
                             size="sm"
                             type="button"
+                            className="rounded-full px-6 border-border hover:bg-foreground/5 text-xs h-9"
                             onClick={() => setUseExistingResume(false)}
                           >
-                            Upload a new one
+                            Add New
                           </Button>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ) : (
-                    <div className="space-y-3">
-                      <div className="relative group">
-                        <input
-                          type="file"
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                          accept=".pdf"
-                          onChange={(e) => setResume(e.target.files?.[0] || null)}
-                        />
-                        <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 transition-colors group-hover:border-primary/50 group-hover:bg-primary/[0.02]">
-                          <Upload className="h-8 w-8 text-muted-foreground group-hover:text-primary mb-2" />
-                          <p className="text-sm font-medium text-center">
-                            {resume ? (
-                              <span className="text-primary">{resume.name}</span>
-                            ) : (
-                              "Click or drag PDF here"
-                            )}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">PDF only, max 5MB</p>
-                        </div>
+                    <motion.div
+                      key="new"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="relative group"
+                    >
+                      <input
+                        type="file"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        accept=".pdf"
+                        onChange={(e) => setResume(e.target.files?.[0] || null)}
+                      />
+                      <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-2xl p-8 transition-all group-hover:border-cyan-500 group-hover:bg-cyan-500/5 group-hover:scale-[1.02]">
+                        <Upload className="h-8 w-8 text-muted-foreground/30 group-hover:text-cyan-500 mb-3 transition-colors" />
+                        <p className="text-xs font-bold text-center text-muted-foreground uppercase tracking-widest group-hover:text-foreground">
+                          {resume ? resume.name : "Select PDF"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/40 font-medium mt-1">Max 5MB</p>
                       </div>
-                    </div>
+                    </motion.div>
                   )}
-                </div>
+                </AnimatePresence>
+              </div>
 
-                <div className="pt-2">
-                  <Button
-                    type="submit"
-                    className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/20"
-                    disabled={(useExistingResume && !existingResume) || (!useExistingResume && !resume) || isSubmitting || !selectedRole || appliedRoleIds.includes(selectedRole?._id)}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : appliedRoleIds.includes(selectedRole?._id) ? (
-                      <>
-                        <Clock className="mr-2 h-5 w-5" />
-                        Applied
-                      </>
-                    ) : (
-                      <>
-                        Apply for this Role
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
+              <Button
+                type="submit"
+                className={`w-full h-14 text-sm font-black tracking-[0.2em] uppercase rounded-full shadow-2xl transition-all ${appliedRoleIds.includes(selectedRole?._id)
+                  ? 'bg-muted text-muted-foreground cursor-not-allowed border-none'
+                  : 'bg-foreground text-background hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98]'
+                  }`}
+                disabled={(useExistingResume && !existingResume) || (!useExistingResume && !resume) || isSubmitting || !selectedRole || appliedRoleIds.includes(selectedRole?._id)}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : appliedRoleIds.includes(selectedRole?._id) ? (
+                  "Applied"
+                ) : (
+                  "Submit Application"
+                )}
+              </Button>
+            </form>
 
-              {selectedRole && (
-                <div className="mt-8 pt-6 border-t animate-in fade-in slide-in-from-bottom-2">
-                  <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground mb-3">Role Summary</h4>
-                  <div className="space-y-4">
-                    <p className="text-sm leading-relaxed">{selectedRole.description}</p>
-                    <div>
-                      <h5 className="font-bold text-sm mb-2">Requirements:</h5>
-                      <p className="text-sm text-muted-foreground">{selectedRole.eligibility}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            {/* Disclaimer */}
+            <p className="mt-8 text-[10px] text-center text-muted-foreground/40 font-medium leading-relaxed px-4">
+              By submitting, you agree to allow the recruiter to view your profile.
+            </p>
+          </GlassCard>
         </div>
       </div>
     </div>
   )
 }
+
 

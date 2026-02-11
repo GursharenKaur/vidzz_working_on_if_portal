@@ -24,7 +24,7 @@ export default function AdminLayout({
   if (!token || role !== "admin") return null
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background text-foreground transition-colors duration-300">
       <AdminNav />
       <main className="flex-1 overflow-y-auto">{children}</main>
     </div>

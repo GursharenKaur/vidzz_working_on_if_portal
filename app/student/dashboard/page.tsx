@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/store/auth"
+import { motion } from "framer-motion"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -18,7 +19,9 @@ import {
   Pie,
   Cell,
 } from "recharts"
-import { Briefcase, Clock, CheckCircle, XCircle } from "lucide-react"
+import { Briefcase, Clock, CheckCircle, XCircle, Sparkles, TrendingUp } from "lucide-react"
+import { StatCard } from "@/components/shared/stat-card"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function StudentDashboardPage() {
   const router = useRouter()
@@ -26,10 +29,10 @@ export default function StudentDashboardPage() {
 
   // State for real data
   const [stats, setStats] = useState([
-    { icon: Briefcase, label: "Total Applications", value: 0 },
-    { icon: Clock, label: "Applications Pending", value: 0 },
-    { icon: CheckCircle, label: "Accepted", value: 0 },
-    { icon: XCircle, label: "Rejected", value: 0 },
+    { icon: Briefcase, label: "Total Applications", value: 0, color: "cyan" },
+    { icon: Clock, label: "Applications Pending", value: 0, color: "purple" },
+    { icon: CheckCircle, label: "Accepted", value: 0, color: "emerald" },
+    { icon: XCircle, label: "Rejected", value: 0, color: "rose" },
   ])
   const [applicationData, setApplicationData] = useState<any[]>([])
   const [statusData, setStatusData] = useState<any[]>([])
@@ -61,7 +64,7 @@ export default function StudentDashboardPage() {
       } catch (err) {
         console.error("Failed to fetch dashboard data", err)
       } finally {
-        setLoading(false)
+        setTimeout(() => setLoading(false), 800) // Small delay for smooth transition
       }
     }
 
@@ -69,28 +72,24 @@ export default function StudentDashboardPage() {
   }, [token])
 
   const processData = (apps: any[]) => {
-    // 1. Calculate Stats
     const total = apps.length
     const accepted = apps.filter(a => a.status?.toUpperCase() === 'ACCEPTED').length
     const rejected = apps.filter(a => a.status?.toUpperCase() === 'REJECTED').length
     const pending = apps.filter(a => ['PENDING', 'SHORTLISTED'].includes(a.status?.toUpperCase())).length
 
     setStats([
-      { icon: Briefcase, label: "Total Applications", value: total },
-      { icon: Clock, label: "Applications Pending", value: pending },
-      { icon: CheckCircle, label: "Accepted", value: accepted },
-      { icon: XCircle, label: "Rejected", value: rejected },
+      { icon: Briefcase, label: "Total Applications", value: total, color: "cyan" },
+      { icon: Clock, label: "Applications Pending", value: pending, color: "purple" },
+      { icon: CheckCircle, label: "Accepted", value: accepted, color: "emerald" },
+      { icon: XCircle, label: "Rejected", value: rejected, color: "rose" },
     ])
 
-    // 2. Prepare Status Pie Chart Data
     setStatusData([
-      { name: "Pending", value: pending, color: "#f59e0b" },
+      { name: "Pending", value: pending, color: "#a855f7" },
       { name: "Accepted", value: accepted, color: "#10b981" },
-      { name: "Rejected", value: rejected, color: "#ef4444" },
+      { name: "Rejected", value: rejected, color: "#f43f5e" },
     ].filter(d => d.value > 0))
 
-    // 3. Prepare Monthly Bar Chart Data (simplified)
-    // Group by month
     const monthMap: Record<string, { applications: number, accepted: number }> = {}
 
     apps.forEach(app => {
@@ -118,104 +117,209 @@ export default function StudentDashboardPage() {
   if (!_hasHydrated) return null
   if (!token || role !== "student") return null
 
-  // ======================
-  // ✅ FULL DASHBOARD UI
-  // ======================
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">
-          Welcome, {user?.name || "Student"} 👋
-        </h1>
-        <p className="text-muted-foreground">
-          Here's your internship application overview.
-        </p>
+    <div className="min-h-screen p-6 lg:p-10">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end"
+      >
+        <div>
+          <div className="flex items-center gap-2 text-cyan-500">
+            <Sparkles className="h-5 w-5" />
+            <span className="text-xs font-bold tracking-widest uppercase">Dashboard</span>
+          </div>
+          <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl">
+            Welcome, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500">{user?.name || "Student"}</span> 👋
+          </h1>
+          <p className="mt-2 text-muted-foreground font-medium">
+            You have <span className="text-foreground font-bold">{stats[1].value} pending</span> applications.
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <div className="rounded-2xl border border-border bg-card px-6 py-3 shadow-sm transition-all duration-300">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Success Rate</p>
+            <div className="mt-1 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
+              <span className="text-lg font-bold text-foreground">
+                {stats[0].value > 0 ? Math.round((stats[2].value / stats[0].value) * 100) : 0}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-10">
+        {stats.map((stat, idx) => (
+          <StatCard
+            key={stat.label}
+            icon={stat.icon}
+            label={stat.label}
+            value={stat.value}
+            loading={loading}
+            delay={idx * 0.1}
+            color={stat.color}
+          />
+        ))}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <Card key={stat.label}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-2xl font-bold mt-1">
-                      {loading ? "..." : stat.value}
-                    </p>
-                  </div>
-                  <Icon className="h-8 w-8 text-cyan-400 opacity-75" />
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="lg:col-span-2"
+        >
+          <Card className="overflow-hidden border-border bg-card/50 backdrop-blur-md">
+            <CardHeader className="border-b border-border bg-foreground/[0.01] p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-bold text-foreground tracking-tight">Application Activity</CardTitle>
+                  <CardDescription className="text-muted-foreground text-sm font-medium">Historical submission trends</CardDescription>
                 </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Applications Over Time</CardTitle>
-            <CardDescription>
-              Your application submissions and acceptances
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              {applicationData.length > 0 ? (
-                <BarChart data={applicationData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="applications" fill="#0891b2" />
-                  <Bar dataKey="accepted" fill="#10b981" />
-                </BarChart>
+                <div className="h-8 w-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-cyan-500" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              {loading ? (
+                <div className="h-[300px] w-full flex items-center justify-center">
+                  <Skeleton className="h-[250px] w-full" />
+                </div>
               ) : (
-                <div className="flex justify-center items-center h-full text-muted-foreground">
-                  No application history yet
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {applicationData.length > 0 ? (
+                      <BarChart data={applicationData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#06b6d4" stopOpacity={1} />
+                            <stop offset="100%" stopColor="#06b6d4" stopOpacity={0.8} />
+                          </linearGradient>
+                          <linearGradient id="barGradient2" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
+                            <stop offset="100%" stopColor="#10b981" stopOpacity={0.8} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                        <XAxis
+                          dataKey="month"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12, fontWeight: 'bold' }}
+                        />
+                        <YAxis
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12, fontWeight: 'bold' }}
+                          allowDecimals={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--popover))',
+                            borderColor: 'hsl(var(--border))',
+                            borderRadius: '12px',
+                            color: 'hsl(var(--foreground))'
+                          }}
+                          itemStyle={{ color: 'hsl(var(--foreground))' }}
+                          cursor={{ fill: 'hsl(var(--foreground))', opacity: 0.05 }}
+                        />
+                        <Legend iconType="circle" />
+                        <Bar
+                          dataKey="applications"
+                          name="Submissions"
+                          fill="url(#barGradient)"
+                          radius={[4, 4, 0, 0]}
+                          barSize={32}
+                        />
+                        <Bar
+                          dataKey="accepted"
+                          name="Acceptances"
+                          fill="url(#barGradient2)"
+                          radius={[4, 4, 0, 0]}
+                          barSize={32}
+                        />
+                      </BarChart>
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                        <div className="rounded-full bg-foreground/[0.03] p-4 border border-dashed border-border">
+                          <Briefcase className="h-8 w-8 opacity-20" />
+                        </div>
+                        <p className="text-xs uppercase font-black tracking-widest">No activity recorded</p>
+                      </div>
+                    )}
+                  </ResponsiveContainer>
                 </div>
               )}
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Application Status</CardTitle>
-            <CardDescription>Current status breakdown</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              {statusData.length > 0 ? (
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label
-                    dataKey="value"
-                  >
-                    {statusData.map((entry, index) => (
-                      <Cell key={index} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
+          <Card className="h-full border-border bg-card/50 backdrop-blur-md">
+            <CardHeader className="border-b border-border bg-foreground/[0.01] p-6">
+              <CardTitle className="text-xl font-bold text-foreground tracking-tight">Application Status</CardTitle>
+              <CardDescription className="text-muted-foreground text-sm font-medium">Distribution breakdown</CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              {loading ? (
+                <div className="h-[300px] w-full flex items-center justify-center">
+                  <div className="h-48 w-48 rounded-full border-8 border-t-cyan-500 border-border animate-spin" />
+                </div>
               ) : (
-                <div className="flex justify-center items-center h-full text-muted-foreground">
-                  No applications yet
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {statusData.length > 0 ? (
+                      <PieChart>
+                        <Pie
+                          data={statusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={8}
+                          dataKey="value"
+                        >
+                          {statusData.map((entry, index) => (
+                            <Cell key={index} fill={entry.color} strokeWidth={0} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--popover))',
+                            borderColor: 'hsl(var(--border))',
+                            borderRadius: '12px',
+                            color: 'hsl(var(--foreground))'
+                          }}
+                          itemStyle={{ color: 'hsl(var(--foreground))' }}
+                        />
+                        <Legend verticalAlign="bottom" height={36} />
+                      </PieChart>
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                        <div className="rounded-full bg-foreground/[0.03] p-4 border border-dashed border-border">
+                          <TrendingUp className="h-8 w-8 opacity-20" />
+                        </div>
+                        <p className="text-xs uppercase font-black tracking-widest">No data available</p>
+                      </div>
+                    )}
+                  </ResponsiveContainer>
                 </div>
               )}
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   )
 }
+

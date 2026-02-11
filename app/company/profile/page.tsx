@@ -1,16 +1,16 @@
-//app/company/profile/page.tsx
-
 "use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from 'next/navigation'
-import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { companyApi } from "@/lib/api/company"
-import { Loader2, Upload, Trash2 } from "lucide-react"
+import { Loader2, Upload, Trash2, Sparkles, Building2, Mail, Phone, Globe, MapPin, Info, CheckCircle2, ShieldCheck, Camera } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { GlassCard } from "@/components/shared/glass-card"
+import { toast } from "sonner"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface CompanyData {
   name: string
@@ -24,7 +24,6 @@ interface CompanyData {
 
 export default function CompanyProfilePage() {
   const router = useRouter()
-  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -39,50 +38,50 @@ export default function CompanyProfilePage() {
   })
   const [logoFile, setLogoFile] = useState<File | null>(null)
 
-  // Check authentication and load profile data
   useEffect(() => {
     const checkAuthAndLoadData = async () => {
       try {
         const data = await companyApi.getProfile()
         setCompanyData({
           name: data.name || "",
-          email: data.contactEmail || data.email || "",
-          phone: data.contactPhone || data.phone || "",
+          email: data.email || "",
+          phone: data.phone || "",
           website: data.website || "",
-          location: data.address?.city || data.location || "",
-          about: data.description || data.about || "",
-          logoUrl: data.logo
+          location: data.location || "",
+          about: data.about || "",
+          logoUrl: data.logoUrl
         })
         setIsAuthenticated(true)
       } catch (error) {
         console.error('Authentication error:', error)
         router.push('/login')
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to access the company profile",
-          variant: "destructive",
-        })
+        toast.error("Authentication required to access profile.")
       } finally {
-        setIsLoading(false)
+        setTimeout(() => setIsLoading(false), 800)
       }
     }
 
     checkAuthAndLoadData()
-  }, [router, toast])
+  }, [router])
 
-  // Show loading state while checking authentication
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-10">
+        <div className="flex justify-between items-end">
+          <div className="space-y-4">
+            <Skeleton className="h-12 w-64 bg-white/5" />
+            <Skeleton className="h-4 w-96 bg-white/5" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Skeleton className="md:col-span-2 h-[600px] bg-white/5 rounded-[40px]" />
+          <Skeleton className="md:col-span-1 h-[400px] bg-white/5 rounded-[40px]" />
+        </div>
       </div>
     )
   }
 
-  // Don't render anything if not authenticated (will redirect)
-  if (!isAuthenticated) {
-    return null
-  }
+  if (!isAuthenticated) return null
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -95,29 +94,13 @@ export default function CompanyProfilePage() {
     const file = e.target.files[0];
     const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
 
-    // Reset file input
-    if (e.target) {
-      e.target.value = '';
-    }
-
-    // Validate file type
     if (!validTypes.includes(file.type)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a PNG, JPG, or JPEG file",
-        variant: "destructive",
-      });
+      toast.error("Please upload a PNG or JPG file.")
       return;
     }
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast({
-        title: "File too large",
-        description: `Maximum file size is 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB`,
-        variant: "destructive",
-      });
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File exceeds 5MB limit.")
       return;
     }
 
@@ -125,45 +108,14 @@ export default function CompanyProfilePage() {
 
     try {
       setIsUploading(true);
-
-      console.log('Starting file upload...');
       const result = await companyApi.uploadLogo(file);
-
-      console.log('File upload successful, updating UI...');
       setCompanyData(prev => ({
         ...prev,
         logoUrl: result.logoUrl || result.filePath
       }));
-
-      toast({
-        title: "Success",
-        description: "Logo uploaded successfully",
-      });
-
+      toast.success("Identity updated successfully!")
     } catch (error: any) {
-      console.error('Error in handleLogoChange:', error);
-
-      // More specific error messages based on error type
-      let errorMessage = 'Failed to upload logo. Please try again.';
-
-      if (error.message.includes('Network Error')) {
-        errorMessage = 'Unable to connect to the server. Please check your internet connection.';
-      } else if (error.message.includes('timeout')) {
-        errorMessage = 'The request timed out. Please try again.';
-      } else if (error.response) {
-        // Server responded with an error status code
-        errorMessage = error.response.data?.message || errorMessage;
-      }
-
-      toast({
-        title: "Upload Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-
-      // Reset the file input on error
-      setLogoFile(null);
-
+      toast.error("Failed to sync logo.")
     } finally {
       setIsUploading(false);
     }
@@ -171,257 +123,253 @@ export default function CompanyProfilePage() {
 
   const handleRemoveLogo = async () => {
     if (!companyData.logoUrl) return;
+    if (!confirm("Remove brand logo?")) return;
 
-    if (confirm("Are you sure you want to remove the company logo?")) {
-      try {
-        setIsUploading(true);
-        await companyApi.deleteLogo();
-
-        setCompanyData(prev => ({
-          ...prev,
-          logoUrl: undefined
-        }));
-        setLogoFile(null);
-
-        toast({
-          title: "Success",
-          description: "Logo removed successfully",
-        });
-      } catch (error: any) {
-        console.error('Error removing logo:', error);
-        toast({
-          title: "Error",
-          description: error.response?.data?.message || "Failed to remove logo. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsUploading(false);
-      }
+    try {
+      setIsUploading(true);
+      await companyApi.deleteLogo();
+      setCompanyData(prev => ({ ...prev, logoUrl: undefined }));
+      setLogoFile(null);
+      toast.success("Logo removed.")
+    } catch (error: any) {
+      toast.error("Removal failed.")
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-
     try {
-      const payload = {
-        name: companyData.name,
-        contactEmail: companyData.email,
-        contactPhone: companyData.phone,
-        website: companyData.website,
-        description: companyData.about,
-        address: {
-          city: companyData.location
-        }
-      }
-      await companyApi.updateProfile(payload);
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
+      await companyApi.updateProfile(companyData);
+      toast.success("Global profile updated!")
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
+      toast.error("Sync failed.")
     } finally {
       setIsSaving(false);
     }
   };
 
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Company Profile</h1>
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-10 min-h-screen">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col lg:flex-row lg:items-end justify-between gap-8"
+      >
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-cyan-500">
+            <Sparkles className="h-4 w-4" />
+            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Settings</span>
+          </div>
+          <h1 className="text-4xl lg:text-5xl font-black text-foreground tracking-tight">Company Profile</h1>
+          <p className="text-muted-foreground font-medium">Update your organizational preferences and brand identity.</p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Company Information */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Company Information</CardTitle>
-            <CardDescription>Update your company details and contact information</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Company Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={companyData.name}
-                  onChange={handleInputChange}
-                  placeholder="Enter company name"
-                  required
-                />
-              </div>
+        <div className="flex items-center gap-4">
+          <div className={`px-4 py-2 rounded-2xl bg-foreground/5 border border-border flex items-center gap-2 text-muted-foreground`}>
+            <ShieldCheck className="h-4 w-4 text-emerald-500" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-foreground">Active Account</span>
+          </div>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSaving}
+            className="h-12 px-10 bg-foreground text-background hover:bg-foreground/90 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-foreground/10"
+          >
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+          </Button>
+        </div>
+      </motion.div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <GlassCard className="p-8 lg:p-12 space-y-10 border-border bg-card/50">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-1.5 bg-cyan-500 rounded-full" />
+              <h3 className="text-2xl font-black text-foreground tracking-tight">Core Details</h3>
+            </div>
+
+            <div className="grid gap-10">
+              <div className="space-y-3">
+                <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Company Name</Label>
+                <div className="relative group">
+                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-cyan-500 transition-colors" />
                   <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={companyData.email}
+                    id="name"
+                    name="name"
+                    value={companyData.name}
                     onChange={handleInputChange}
-                    placeholder="Enter contact email"
+                    className="h-14 pl-12 bg-foreground/5 border-border rounded-2xl text-foreground font-bold focus:ring-cyan-500/50"
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={companyData.phone}
-                    onChange={handleInputChange}
-                    placeholder="Enter phone number"
-                  />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Corporate Email</Label>
+                  <div className="relative group">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-cyan-500 transition-colors" />
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={companyData.email}
+                      onChange={handleInputChange}
+                      className="h-14 pl-12 bg-foreground/5 border-border rounded-2xl text-foreground font-bold focus:ring-cyan-500/50"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="phone" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Phone Number</Label>
+                  <div className="relative group">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-cyan-500 transition-colors" />
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={companyData.phone}
+                      onChange={handleInputChange}
+                      className="h-14 pl-12 bg-foreground/5 border-border rounded-2xl text-foreground font-bold focus:ring-cyan-500/50"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    name="website"
-                    type="url"
-                    value={companyData.website}
-                    onChange={handleInputChange}
-                    placeholder="https://example.com"
-                  />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label htmlFor="website" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Website URL</Label>
+                  <div className="relative group">
+                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-cyan-500 transition-colors" />
+                    <Input
+                      id="website"
+                      name="website"
+                      type="url"
+                      value={companyData.website}
+                      onChange={handleInputChange}
+                      className="h-14 pl-12 bg-foreground/5 border-border rounded-2xl text-foreground font-bold focus:ring-cyan-500/50"
+                      placeholder="https://company.ai"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    value={companyData.location}
-                    onChange={handleInputChange}
-                    placeholder="City, Country"
-                  />
+                <div className="space-y-3">
+                  <Label htmlFor="location" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Location</Label>
+                  <div className="relative group">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-cyan-500 transition-colors" />
+                    <Input
+                      id="location"
+                      name="location"
+                      value={companyData.location}
+                      onChange={handleInputChange}
+                      className="h-14 pl-12 bg-foreground/5 border-border rounded-2xl text-foreground font-bold focus:ring-cyan-500/50"
+                      placeholder="City, Country"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="about">About</Label>
+              <div className="space-y-3">
+                <Label htmlFor="about" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                  <Info className="h-3 w-3" />
+                  About Company
+                </Label>
                 <textarea
                   id="about"
                   name="about"
                   value={companyData.about}
                   onChange={handleInputChange}
-                  rows={4}
+                  rows={6}
+                  className="flex w-full rounded-3xl border border-border bg-foreground/[0.03] text-foreground placeholder:text-muted-foreground/30 px-6 py-4 text-sm focus:ring-cyan-500/50 focus:outline-none transition-all font-medium"
                   placeholder="Tell us about your company..."
-                  className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
+            </div>
+          </GlassCard>
+        </div>
 
-              <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Save Changes'
-                  )}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        <div className="space-y-8">
+          <GlassCard className="p-8 space-y-6 flex flex-col items-center border-border bg-card/50">
+            <h4 className="w-full text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Brand Logo</h4>
 
-        {/* Right Column - Logo Upload */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Company Logo</CardTitle>
-            <CardDescription>Upload PNG, JPG, max 5MB</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="border border-dashed rounded-lg p-4 text-center bg-muted/50">
-              <input
-                type="file"
-                id="logo-upload"
-                accept="image/png, image/jpeg, image/jpg"
-                onChange={handleLogoChange}
-                className="hidden"
-                disabled={isUploading}
-              />
-              <label
-                htmlFor="logo-upload"
-                className={`flex flex-col items-center justify-center space-y-4 cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-              >
-                {companyData.logoUrl || logoFile ? (
-                  <div className="relative w-full aspect-square rounded-md overflow-hidden bg-white">
+            <div className="relative w-full aspect-square rounded-[40px] bg-foreground/[0.02] border border-dashed border-border flex items-center justify-center overflow-hidden group">
+              <AnimatePresence mode="wait">
+                {companyData.logoUrl ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="w-full h-full p-12"
+                  >
                     <img
-                      src={
-                        logoFile
-                          ? URL.createObjectURL(logoFile)
-                          : companyData.logoUrl?.startsWith('http')
-                            ? companyData.logoUrl
-                            : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}${companyData.logoUrl}`
-                      }
-                      alt="Company Logo Preview"
-                      className="w-full h-full object-contain p-2"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.onerror = null;
-                        target.src = 'https://via.placeholder.com/200x200?text=Logo+Not+Found';
-                      }}
+                      src={companyData.logoUrl.startsWith('http') ? companyData.logoUrl : `${backendUrl}${companyData.logoUrl}`}
+                      alt="Identity"
+                      className="w-full h-full object-contain filter drop-shadow-2xl"
                     />
-                    {!isUploading && (
-                      <button
+                    <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                      <Button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveLogo();
-                        }}
-                        className="absolute top-2 right-2 bg-destructive text-destructive-foreground p-1.5 rounded-full hover:bg-destructive/90 shadow-sm"
+                        variant="ghost"
+                        onClick={handleRemoveLogo}
+                        className="h-12 w-12 p-0 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                      <Label htmlFor="logo-upload" className="h-12 w-12 flex items-center justify-center rounded-2xl bg-foreground text-background hover:bg-foreground/90 cursor-pointer">
+                        <Camera className="h-5 w-5" />
+                      </Label>
+                    </div>
+                  </motion.div>
                 ) : (
-                  <div className="py-8 w-full flex flex-col items-center">
-                    <div className="p-4 rounded-full bg-background mb-4 shadow-sm border">
-                      <Upload className="h-8 w-8 text-muted-foreground" />
+                  <motion.label
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    htmlFor="logo-upload"
+                    className="flex flex-col items-center gap-4 cursor-pointer p-10 text-center"
+                  >
+                    <div className="p-6 rounded-3xl bg-foreground/5 border border-border text-muted-foreground group-hover:text-cyan-500 group-hover:bg-cyan-500/10 transition-all">
+                      <Upload className="h-10 w-10" />
                     </div>
-                    <div className="text-sm">
-                      <p className="font-semibold">Click to upload</p>
-                      <p className="text-muted-foreground">or drag and drop</p>
+                    <div className="space-y-1">
+                      <p className="text-foreground font-black text-xs uppercase tracking-widest">Upload Profile Picture</p>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">SVG, PNG or JPG (Max 5MB)</p>
                     </div>
-                  </div>
+                  </motion.label>
                 )}
-              </label>
+              </AnimatePresence>
+
+              {isUploading && (
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
+                  <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-cyan-500">Syncing Assets...</p>
+                </div>
+              )}
             </div>
 
-            <Button
-              className="w-full"
-              variant="outline"
+            <input
+              type="file"
+              id="logo-upload"
+              accept="image/png, image/jpeg, image/jpg"
+              onChange={handleLogoChange}
+              className="hidden"
               disabled={isUploading}
-              onClick={() => document.getElementById('logo-upload')?.click()}
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  {companyData.logoUrl ? 'Change Logo' : 'Upload Logo'}
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+            />
+
+            <div className="w-full p-6 rounded-2xl bg-cyan-500/5 border border-cyan-500/10 space-y-2">
+              <div className="flex items-center gap-2 text-cyan-500">
+                <CheckCircle2 className="h-4 w-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Brand Verified</span>
+              </div>
+              <p className="text-muted-foreground text-[10px] font-medium leading-relaxed">
+                Your logo will be visible to all students and partners across the platform.
+              </p>
+            </div>
+          </GlassCard>
+        </div>
+      </form>
     </div>
   );
 }

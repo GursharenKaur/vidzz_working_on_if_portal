@@ -46,5 +46,29 @@
     "createdAt": "2026-01-28T13:24:27.157Z",
     "updatedAt": "2026-01-28T13:24:27.157Z",
     "__v": 0
+  },
+  {
+    "_id": "697b5f78db84afb52c98d6ed",
+    "companyId": "6979e5b3fcab3148eb85ab49",
+    "title": "video editing ",
+    "description": "good knowledge",
+    "stipend": "200",
+    "eligibility": "any btech student ",
+    "currency": "USD",
+    "createdAt": "2026-01-29T13:24:08.212Z",
+    "updatedAt": "2026-01-29T13:24:08.212Z",
+    "__v": 0
+  },
+  {
+    "_id": "697ce94aa225173f485534e2",
+    "companyId": "6979e5b3fcab3148eb85ab49",
+    "title": "qwerty",
+    "description": "hdsf g",
+    "stipend": "123",
+    "eligibility": "any btech student ",
+    "currency": "INR",
+    "createdAt": "2026-01-30T17:24:26.395Z",
+    "updatedAt": "2026-01-30T17:24:26.395Z",
+    "__v": 0
   }
 ]

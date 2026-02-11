@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Building2, TrendingUp, Activity } from "lucide-react"
+import { Users, Building2, TrendingUp, Activity, Sparkles, PieChart as PieIcon, BarChart3, ArrowUpRight } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -17,12 +17,15 @@ import {
   Pie,
   Cell,
 } from "recharts"
+import { motion } from "framer-motion"
+import { GlassCard } from "@/components/shared/glass-card"
+import { StatCard } from "@/components/shared/stat-card"
 
 const stats = [
-  { icon: Users, label: "Total Students", value: 2847 },
-  { icon: Building2, label: "Total Companies", value: 156 },
-  { icon: TrendingUp, label: "Total Applications", value: 8934 },
-  { icon: Activity, label: "Active Roles", value: 342 },
+  { icon: Users, label: "Total Students", value: 2847, color: "text-purple-400" },
+  { icon: Building2, label: "Total Companies", value: 156, color: "text-blue-400" },
+  { icon: TrendingUp, label: "Total Applications", value: 8934, color: "text-emerald-400" },
+  { icon: Activity, label: "Active Roles", value: 342, color: "text-amber-400" },
 ]
 
 const overallTrends = [
@@ -42,122 +45,229 @@ const platformStats = [
 
 export default function FacultyDashboard() {
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Faculty Dashboard</h1>
-        <p className="text-muted-foreground">Platform overview and analytics</p>
-      </div>
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-10 min-h-screen">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex flex-col lg:flex-row lg:items-end justify-between gap-8"
+      >
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-purple-500">
+            <Sparkles className="h-4 w-4" />
+            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Overview</span>
+          </div>
+          <h1 className="text-4xl lg:text-5xl font-black text-foreground tracking-tight">Faculty Dashboard</h1>
+          <p className="text-muted-foreground font-medium">Real-time performance metrics and growth trajectories across the platform.</p>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="px-4 py-2 rounded-2xl bg-foreground/5 border border-border flex items-center gap-2 text-muted-foreground">
+            <Activity className="h-4 w-4 text-emerald-500" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Live Telemetry</span>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <Card key={stat.label}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                  </div>
-                  <Icon className="h-8 w-8 text-purple-400 opacity-75" />
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, idx) => (
+          <StatCard
+            key={stat.label}
+            icon={stat.icon}
+            label={stat.label}
+            value={stat.value}
+          // index={idx}
+          />
+        ))}
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Platform Growth</CardTitle>
-            <CardDescription>Growth trends over time</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <GlassCard className="p-8 space-y-8" delay={0.2}>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h3 className="text-xl font-black text-foreground flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-purple-500" />
+                Growth Velocity
+              </h3>
+              <p className="text-xs text-muted-foreground font-medium">Platform scaling across student and corporate verticals.</p>
+            </div>
+            <ArrowUpRight className="h-5 w-5 text-muted-foreground/30" />
+          </div>
+
+          <div className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={overallTrends}>
                 <defs>
                   <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.8} />
+                    <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#a78bfa" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorCompanies" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.5} />
+                <XAxis
+                  dataKey="month"
+                  fontSize={10}
+                  fontWeight="bold"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <YAxis
+                  fontSize={10}
+                  fontWeight="bold"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--popover))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '16px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: 'hsl(var(--foreground))'
+                  }}
+                  itemStyle={{ color: '#a78bfa' }}
+                />
                 <Area
                   type="monotone"
                   dataKey="students"
-                  stackId="1"
                   stroke="#a78bfa"
+                  strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorStudents)"
                 />
                 <Area
                   type="monotone"
                   dataKey="companies"
-                  stackId="1"
-                  stroke="#10b981"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorCompanies)"
                 />
               </AreaChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          </div>
+        </GlassCard>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Application Status Distribution</CardTitle>
-            <CardDescription>Overview of all applications</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={platformStats}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={100}
-                >
-                  {platformStats.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-8 space-y-8">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h3 className="text-xl font-black text-foreground flex items-center gap-2">
+                <PieIcon className="h-5 w-5 text-amber-500" />
+                Pipeline Outcome
+              </h3>
+              <p className="text-xs text-muted-foreground font-medium">End-to-end evaluation results across the cohort.</p>
+            </div>
+          </div>
+
+          <div className="h-[350px] w-full flex flex-col md:flex-row items-center gap-8">
+            <div className="flex-1 w-full h-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={platformStats}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={80}
+                    outerRadius={110}
+                    paddingAngle={8}
+                    dataKey="value"
+                  >
+                    {platformStats.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '16px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      color: 'hsl(var(--foreground))'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-4 w-full md:w-48">
+              {platformStats.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between group">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">{item.name}</span>
+                  </div>
+                  <span className="text-xs font-black text-foreground">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </GlassCard>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Application Trend</CardTitle>
-          <CardDescription>Monthly application volume growth</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+      <GlassCard className="p-10 space-y-10 overflow-hidden relative" delay={0.4}>
+        <div className="absolute top-0 right-0 p-12 opacity-10">
+          <BarChart3 className="h-64 w-64 text-purple-500" />
+        </div>
+        <div className="space-y-1 relative z-10">
+          <h3 className="text-2xl font-black text-foreground flex items-center gap-3">
+            <Activity className="h-6 w-6 text-purple-500" />
+            Application Volume Analysis
+          </h3>
+          <p className="text-sm text-muted-foreground font-medium">Historical engagement data and seasonal peaks.</p>
+        </div>
+
+        <div className="h-[400px] w-full relative z-10">
+          <ResponsiveContainer width="100%" height="100%">
             <LineChart data={overallTrends}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="applications" stroke="#a78bfa" strokeWidth={2} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.5} />
+              <XAxis
+                dataKey="month"
+                fontSize={10}
+                fontWeight="bold"
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              />
+              <YAxis
+                fontSize={10}
+                fontWeight="bold"
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--popover))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  color: 'hsl(var(--foreground))'
+                }}
+              />
+              <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }} />
+              <Line
+                type="monotone"
+                dataKey="applications"
+                stroke="#a78bfa"
+                strokeWidth={4}
+                dot={{ r: 6, fill: '#a78bfa', strokeWidth: 0 }}
+                activeDot={{ r: 8, stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+              />
             </LineChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </GlassCard>
     </div>
   )
 }
+

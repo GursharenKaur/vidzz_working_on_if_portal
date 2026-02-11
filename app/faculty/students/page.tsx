@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Eye } from "lucide-react"
+import { Search, Eye, Sparkles, Users, UserCheck, ShieldCheck, Mail, GraduationCap, MapPin, Calendar, ArrowUpRight } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { GlassCard } from "@/components/shared/glass-card"
 
 const students = [
   {
@@ -57,66 +58,124 @@ export default function FacultyStudentsPage() {
   )
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Student Management</h1>
-          <p className="text-muted-foreground">View student accounts and records</p>
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-10 min-h-screen bg-black/50">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col lg:flex-row lg:items-end justify-between gap-8"
+      >
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-purple-400">
+            <Sparkles className="h-4 w-4" />
+            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Academic Administration</span>
+          </div>
+          <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tight">Student Cadre</h1>
+          <p className="text-zinc-500 font-medium">Manage and audit the digital academic records of all registered participants.</p>
         </div>
-      </div>
 
-      {/* Search */}
-      <div className="mb-6 relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search students by name, email, or university..."
-          className="pl-10"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+        <div className="flex items-center gap-4">
+          <div className={`px-4 py-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-2 text-zinc-400`}>
+            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Integrity Verified</span>
+          </div>
+        </div>
+      </motion.div>
 
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Registered Students</CardTitle>
-          <CardDescription>{filtered.length} students found</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>University</TableHead>
-                  <TableHead>Major</TableHead>
-                  <TableHead>Applications</TableHead>
-                  <TableHead>Join Date</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-medium">{student.name}</TableCell>
-                    <TableCell className="text-sm">{student.email}</TableCell>
-                    <TableCell className="text-sm">{student.university}</TableCell>
-                    <TableCell className="text-sm">{student.major}</TableCell>
-                    <TableCell className="text-sm">{student.applications}</TableCell>
-                    <TableCell className="text-sm">{student.joinDate}</TableCell>
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative group flex-grow">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600 group-focus-within:text-white transition-colors" />
+            <Input
+              placeholder="Search by name, email, or institution..."
+              className="h-14 pl-12 bg-white/5 border-white/10 rounded-2xl text-white placeholder:text-zinc-700 focus:ring-purple-500/50 font-bold"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-2 px-6 bg-white/5 border border-white/10 rounded-2xl">
+            <Users className="h-4 w-4 text-purple-400" />
+            <span className="text-xs font-black text-white uppercase tracking-widest">{filtered.length} Results</span>
+          </div>
+        </div>
+
+        <GlassCard className="overflow-hidden border-white/5">
+          <Table>
+            <TableHeader className="bg-white/[0.02]">
+              <TableRow className="border-white/5 hover:bg-transparent">
+                <TableHead className="h-14 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 pl-8">Student Identity</TableHead>
+                <TableHead className="h-14 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Institution</TableHead>
+                <TableHead className="h-14 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Specialization</TableHead>
+                <TableHead className="h-14 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 text-center">Applications</TableHead>
+                <TableHead className="h-14 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 pr-8 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <AnimatePresence mode="popLayout">
+                {filtered.map((student, idx) => (
+                  <motion.tr
+                    key={student.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="border-white/5 group hover:bg-white/[0.03] transition-colors"
+                  >
+                    <TableCell className="pl-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20">
+                          <UserCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-white group-hover:text-purple-400 transition-colors uppercase tracking-tight">{student.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Mail className="h-3 w-3 text-zinc-600" />
+                            <p className="text-[10px] font-bold text-zinc-500">{student.email}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
                     <TableCell>
-                      <Button size="sm" variant="ghost">
-                        <Eye className="h-4 w-4" />
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-zinc-600" />
+                        <span className="text-xs font-bold text-zinc-300">{student.university}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-3.5 w-3.5 text-zinc-600" />
+                        <span className="text-xs font-bold text-zinc-300">{student.major}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-white/5 border border-white/10 text-xs font-black text-white">
+                        {student.applications}
+                      </div>
+                    </TableCell>
+                    <TableCell className="pr-8 text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-10 px-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/10"
+                      >
+                        Audit <ArrowUpRight className="ml-2 h-3.5 w-3.5" />
                       </Button>
                     </TableCell>
-                  </TableRow>
+                  </motion.tr>
                 ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+              </AnimatePresence>
+            </TableBody>
+          </Table>
+
+          {filtered.length === 0 && (
+            <div className="py-20 flex flex-col items-center justify-center text-center gap-4">
+              <div className="p-4 rounded-full bg-white/5">
+                <Search className="h-8 w-8 text-zinc-700" />
+              </div>
+              <p className="text-zinc-500 font-black text-xs uppercase tracking-widest">No matching records found in student cadre</p>
+            </div>
+          )}
+        </GlassCard>
+      </div>
     </div>
   )
 }
+

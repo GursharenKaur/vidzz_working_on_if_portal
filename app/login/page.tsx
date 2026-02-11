@@ -1,35 +1,36 @@
-//app/login/page.tsx
-
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { useAuthStore } from "@/lib/store/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
+import { Loader2, ShieldCheck, UserPlus, LogIn } from "lucide-react"
 import { RegisterForm } from "@/components/auth/RegisterForm"
+import { GlassCard } from "@/components/shared/glass-card"
+import { ThemeToggle } from "@/components/shared/theme-toggle"
+import { motion, AnimatePresence } from "framer-motion"
 
 type AuthMode = 'login' | 'register'
 
 export default function AuthPage() {
+  const { theme } = useTheme()
   const [mode, setMode] = useState<AuthMode>('login')
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
     try {
-      console.log("Attempting login with:", { email });
-
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/auth/login`,
         {
@@ -42,204 +43,164 @@ export default function AuthPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error("Login failed:", data);
-        throw new Error(data.message || "Login failed. Please check your credentials and try again.");
+        throw new Error(data.message || "Login failed. Please check your credentials.");
       }
 
-      console.log("Login successful, response data:", data);
-
-      if (!data.token || !data.role) {
-        throw new Error("Invalid response from server");
-      }
-
-      // Normalize role to lowercase for consistency
       const userRole = data.role.toLowerCase();
-
-      // Validate role
-      if (!['student', 'company', 'admin', 'faculty'].includes(userRole)) {
-        throw new Error("Invalid user role");
-      }
-
-      // Update auth state
       const { setAuth } = useAuthStore.getState();
       setAuth(data.token, userRole, data.user, data.profile);
 
-      // Determine redirect path based on role
-      const redirectPath = `/${userRole}/dashboard`;
-      console.log("Auth state updated, redirecting to:", redirectPath);
-
-      // Force a hard redirect to ensure the layout updates
-      window.location.href = redirectPath;
-
+      window.location.href = `/${userRole}/dashboard`;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Login failed. Please try again.";
-      console.error("Login error:", errorMessage, err);
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
       setIsLoading(false);
     }
   };
-  if (mode === 'login') {
-    return (
-      <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-        <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-          <div className="absolute inset-0 bg-zinc-900" />
-          <div className="relative z-20 flex items-center text-lg font-medium">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2 h-6 w-6"
-            >
-              <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-            </svg>
-            TVC
-          </div>
-          <div className="relative z-20 mt-auto">
-            <blockquote className="space-y-2">
-              <p className="text-lg">
-                &ldquo;INTERNSHIP FAIR &rdquo;
-              </p>
-              <footer className="text-sm">INTERNSHIP FAIR </footer>
-            </blockquote>
-          </div>
-        </div>
-        <div className="lg:p-8">
-          <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
-            <div className="flex flex-col space-y-2 text-center">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Welcome back
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Enter your email and password to sign in
-              </p>
-            </div>
-            <div className="grid gap-6">
-              <form onSubmit={handleLogin}>
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      placeholder="name@example.com"
-                      type="email"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                      autoCorrect="off"
-                      disabled={isLoading}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
+
+  return (
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-background transition-colors duration-500">
+      {/* Cinematic Background Elements */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/10 blur-[120px] animate-pulse" />
+      </div>
+
+      <div className="absolute top-8 right-8 z-50">
+        <ThemeToggle />
+      </div>
+
+      <AnimatePresence mode="wait">
+        {mode === 'login' ? (
+          <motion.div
+            key="login"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="w-full max-w-[1000px] grid lg:grid-cols-2 gap-0 relative z-10"
+          >
+            {/* Left Side: Branding */}
+            <div className="hidden lg:flex flex-col justify-between p-12 bg-white/[0.02] dark:bg-black/20 border-y border-l border-white/10 rounded-l-[32px] backdrop-blur-md">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <Image 
+                      src={theme === 'dark' ? "/TVC logo white.png" : "/TVC Logo Black.png"}
+                      alt="TVC Logo" 
+                      width={24} 
+                      height={24}
+                      className="h-6 w-6"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">
-                      Password
-                    </Label>
-                    <Input
-                      id="password"
-                      placeholder="••••••••"
-                      type="password"
-                      autoComplete="current-password"
-                      disabled={isLoading}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={8}
-                    />
+                  <span className="text-xl font-black tracking-tighter text-foreground">IF Portal</span>
+                </div>
+                <h1 className="text-5xl font-black leading-tight text-foreground tracking-tighter">
+                  Experience the <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Future</span> of Recruitment.
+                </h1>
+                <p className="text-muted-foreground text-lg font-medium leading-relaxed max-w-md">
+                 Platform designed to seamlessly connect ambitious students with top-tier internship opportunities.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <ShieldCheck className="h-5 w-5 text-emerald-400" />
                   </div>
-                  {error && (
-                    <p className="text-sm text-red-500">{error}</p>
-                  )}
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Sign In
-                  </Button>
-                </div>
-              </form>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Don't have an account?
-                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">Secure Infrastructure</p>
+                    <p className="text-xs text-muted-foreground font-medium">End-to-end encrypted validation protocols.</p>
+                  </div>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                type="button"
-                disabled={isLoading}
-                onClick={() => setMode('register')}
-              >
-                Create an account
-              </Button>
             </div>
-            <p className="px-8 text-center text-sm text-muted-foreground">
-              By clicking continue, you agree to our{" "}
-              <a
-                href="/terms"
-                className="underline underline-offset-4 hover:text-primary"
-              >
-                Terms of Service
-              </a>{" "}
-              and{" "}
-              <a
-                href="/privacy"
-                className="underline underline-offset-4 hover:text-primary"
-              >
-                Privacy Policy
-              </a>
-              .
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
-  // Registration view
-  return (
-    <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-      <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-        <div className="absolute inset-0 bg-zinc-900" />
-        <div className="relative z-20 flex items-center text-lg font-medium">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mr-2 h-6 w-6"
+            {/* Right Side: Form */}
+            <GlassCard className="p-8 lg:p-12 border-white/10 rounded-[32px] lg:rounded-l-none shadow-2xl flex flex-col justify-center">
+              <div className="space-y-8">
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-black tracking-tight text-foreground">Login to your account</h2>
+                  <p className="text-muted-foreground font-medium"></p>
+                </div>
+
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Username (Email)</Label>
+                      <Input
+                        id="email"
+                        placeholder="name@domain.com"
+                        type="email"
+                        className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-cyan-500/50"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password" id="password-label" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Access Key (Password)</Label>
+                      <Input
+                        id="password"
+                        placeholder="••••••••"
+                        type="password"
+                        className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-cyan-500/50"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {error && (
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs font-bold text-rose-500 bg-rose-500/10 p-3 rounded-lg border border-rose-500/20 text-center uppercase tracking-widest">{error}</motion.p>
+                  )}
+
+                  <Button type="submit" className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-black uppercase tracking-widest transition-all shadow-xl shadow-foreground/10 group" disabled={isLoading}>
+                    {isLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        Initialize Session
+                        <LogIn className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                <div className="relative py-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-white/5" />
+                  </div>
+                  <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest">
+                    <span className="bg-transparent px-4 text-muted-foreground">Don't Have an Account?</span>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  type="button"
+                  className="w-full h-12 border-white/10 hover:bg-white/5 rounded-xl font-black uppercase tracking-widest transition-all text-foreground/70"
+                  onClick={() => setMode('register')}
+                >
+                  Sign up
+                  <UserPlus className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </GlassCard>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="register"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="w-full max-w-[600px] relative z-10"
           >
-            <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-          </svg>
-          InternConnect
-        </div>
-        <div className="relative z-20 mt-auto">
-          <blockquote className="space-y-2">
-            <p className="text-lg">
-              &ldquo;Start your journey to find the perfect internship opportunity.&rdquo;
-            </p>
-            <footer className="text-sm">Join thousands of students</footer>
-          </blockquote>
-        </div>
-      </div>
-      <div className="lg:p-8">
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[500px]">
-          <RegisterForm onSwitchToLogin={() => setMode('login')} />
-        </div>
-      </div>
+            <GlassCard className="p-8 lg:p-12 border-white/10 rounded-[32px] shadow-2xl">
+              <RegisterForm onSwitchToLogin={() => setMode('login')} />
+            </GlassCard>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

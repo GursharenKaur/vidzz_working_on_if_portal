@@ -22,7 +22,7 @@ export default function FacultyLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-screen bg-[#030303]">
       <FacultyNav />
       <main className="flex-1 overflow-auto">{children}</main>
     </div>
