@@ -19,7 +19,7 @@ const sendEmail = async (to, subject, text, html = null) => {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const { data, error } = await resend.emails.send({
-      from: "Internship Portal <onboarding@resend.dev>",
+      from: "Internship Portal <noreply@tvctiet.in>",
       to: to,
       subject: subject,
       html: html || text,
