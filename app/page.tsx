@@ -168,7 +168,7 @@ export default function LandingPage() {
                   playsInline
                   poster="/TVC logo white.png"
                 >
-                  <source src="/how-it-works.mp4" type="video/mp4" />
+                  <source src="/how-it-works-whatsapp.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>
