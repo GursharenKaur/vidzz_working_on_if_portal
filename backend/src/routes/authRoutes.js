@@ -8,26 +8,33 @@ const {
   resendOtp,
 } = require('../controllers/authController');
 
+const getRateLimitKey = (req) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+  return email ? `${ip}:${email}` : String(ip);
+};
+
 // Rate limit for actions that send OTPs (register + resend)
-// Example: max 5 OTP emails per 15 minutes per IP
+// Increased to avoid sign-in flow breaking during rapid retries.
 const otpSendLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: getRateLimitKey,
   message: {
     message:
-      'Too many OTP requests from this IP, please try again after 15 minutes.',
+      'Too many OTP requests from this IP/email, please try again after 15 minutes.',
   },
 });
 
 // Rate limit for OTP verification attempts
-// Example: max 10 verify attempts per 15 minutes per IP
 const otpVerifyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 40,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: getRateLimitKey,
   message: {
     message:
       'Too many OTP verification attempts, please try again after 15 minutes.',
