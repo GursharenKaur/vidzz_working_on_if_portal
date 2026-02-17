@@ -116,7 +116,7 @@ export default function StudentProfilePage() {
       if (data.success) {
         const url = data.resume.startsWith('http')
           ? data.resume
-          : `${process.env.NEXT_PUBLIC_API_URL}${data.resume}`
+          : `${process.env.NEXT_PUBLIC_API_URL}${data.resume.startsWith("/") ? "" : "/"}${data.resume}`
         setUploadedResumeUrl(url)
         toast.success("Resume uploaded successfully! 📁")
       }
