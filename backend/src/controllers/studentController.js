@@ -19,9 +19,10 @@ const uploadToCloudinary = async (file) => {
     // If it's a standard PDF, it will be 'image' or 'page'.
     // If it's complex, it might be 'raw'.
     const result = await cloudinary.uploader.upload(file.path, {
-      resource_type: "raw", // Force raw to prevent PDF processing issues
+      resource_type: auto, // Force raw to prevent PDF processing issues
       folder: "internship-portal",
       use_filename: true,
+      access_mode: "public",
       unique_filename: true,
     });
     return result.secure_url;
