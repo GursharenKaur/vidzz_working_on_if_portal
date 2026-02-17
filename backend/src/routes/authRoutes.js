@@ -12,7 +12,7 @@ const {
 // Example: max 5 OTP emails per 15 minutes per IP
 const otpSendLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -25,7 +25,7 @@ const otpSendLimiter = rateLimit({
 // Example: max 10 verify attempts per 15 minutes per IP
 const otpVerifyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: 40,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
