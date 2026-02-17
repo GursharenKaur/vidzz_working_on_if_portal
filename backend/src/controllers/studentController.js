@@ -75,18 +75,33 @@ const applyJob = asyncHandler(async (req, res) => {
       throw new Error('No existing resume found in your profile. Please upload one.');
     }
     resumeUrl = student.resumeUrl;
-  } else {
-    if (!req.file) {
-      res.status(400);
-      throw new Error('Resume file is required');
+  } } else {
+      if (!req.file) {
+        res.status(400);
+        throw new Error('Resume file is required');
+      }
+    
+      // Upload to Cloudinary (IMPORTANT)
+      const result = await cloudinary.uploader.upload(
+        req.file.path,
+        {
+          resource_type: "raw",
+          folder: "internship-portal",
+          public_id: `resume-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
+        }
+      );
+    
+      resumeUrl = result.secure_url;
+    
+      // Delete local temp file
+      const fs = require("fs");
+      fs.unlinkSync(req.file.path);
+    
+      // Auto-sync profile resume
+      student.resumeUrl = resumeUrl;
+      await student.save();
     }
-    const dir = req.uploadDir || 'uploads/resumes';
-    resumeUrl = `/${dir}/${req.file.filename}`;
 
-    // Auto-sync: Update student's profile resume if they upload a new one during application
-    student.resumeUrl = resumeUrl;
-    await student.save();
-  }
 
   // Fetch role to get companyId
   const role = await Role.findById(roleId);
