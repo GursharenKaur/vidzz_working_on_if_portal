@@ -16,7 +16,7 @@ import { MapPin, Briefcase, ChevronRight, Filter, Search, Sparkles } from "lucid
 import { GlassCard } from "@/components/shared/glass-card"
 import { motion } from "framer-motion"
 import { Skeleton } from "@/components/ui/skeleton"
-
+const [isOpensetIsOpen] = useState(false)
 export default function CompaniesPage() {
   const { token, _hasHydrated } = useAuthStore()
   const [companies, setCompanies] = useState<any[]>([])
@@ -57,47 +57,46 @@ export default function CompaniesPage() {
   })
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-10 min-h-screen">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-end justify-between gap-8"
+    <div className="relative w-full sm:w-64">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full h-12 rounded-xl border border-border bg-black text-white px-4 flex items-center justify-between"
       >
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-cyan-500">
-            <Sparkles className="h-4 w-4" />
-            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Recruiters</span>
+        <span>{selectedRole === "all" ? "All Roles" : selectedRole}</span>
+        <ChevronRight
+          className={`h-4 w-4 transition-transform ${
+            isOpen ? "rotate-90" : ""
+          }`}
+        />
+      </button>
+    
+      {isOpen && (
+        <div className="absolute top-full left-0 w-full bg-black border border-border rounded-xl mt-2 shadow-2xl z-50">
+          <div
+            onClick={() => {
+              setSelectedRole("all")
+              setIsOpen(false)
+            }}
+            className="px-4 py-3 hover:bg-zinc-800 cursor-pointer"
+          >
+            All Roles
           </div>
-          <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground">Companies</h1>
-          <p className="text-muted-foreground max-w-lg">Connect with organizations offering internship specialized opportunities.</p>
-        </div>
-
-        <div className="w-full sm:w-64">
-          <Select value={selectedRole} onValueChange={setSelectedRole}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Roles" />
-            </SelectTrigger>
-        
-            <SelectContent
-              position="popper"
-              side="bottom"
-              align="start"
-              sideOffset={6}
-              className="z-[9999] bg-popover border border-border shadow-2xl rounded-xl"
+    
+          {roles.map((role) => (
+            <div
+              key={role}
+              onClick={() => {
+                setSelectedRole(role)
+                setIsOpen(false)
+              }}
+              className="px-4 py-3 hover:bg-zinc-800 cursor-pointer"
             >
-              <SelectItem value="all">All Roles</SelectItem>
-                {roles.map(role => (
-                  <SelectItem key={role} value={role}>
-                    {role}
-                  </SelectItem>
-                ))}
-              <SelectItem value="content">Content Creator</SelectItem>
-              <SelectItem value="support">Flight Support Trainee</SelectItem>
-              <SelectItem value="hr">HR Interns</SelectItem>
-            </SelectContent>
-          </Select>
+              {role}
+            </div>
+          ))}
         </div>
-      </motion.div>
+      )}
+    </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {loading ? (
