@@ -282,7 +282,7 @@ export default function CompanyDetailsPage() {
                         : 'border-border bg-card/50 hover:border-border hover:bg-foreground/[0.04]'
                         }`}
                     >
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                      <div className="flex flex-col md:flex-row justify-between items-start gap-6">
                         <div className="space-y-4 flex-1">
                           <div className="flex items-center gap-3">
                             <h3 className="text-2xl font-bold text-foreground group-hover:text-cyan-500 transition-colors">
@@ -304,7 +304,7 @@ export default function CompanyDetailsPage() {
                             </div>
                           </div>
 
-                          <p className="text-muted-foreground text-sm line-clamp-2 font-medium">
+                          <p className="text-muted-foreground text-sm font-medium">
                             {role.description}
                           </p>
                         </div>
